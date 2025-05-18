@@ -41,7 +41,7 @@ public class VentanaPrincipal extends JFrame {
         JPanel panelSuperior = new JPanel(new BorderLayout());
         panelSuperior.setOpaque(false);
 
-        JButton botonCerrarSesion = new JButton("Volver");
+        JButton botonCerrarSesion = new JButton("Salir");
         configurarBotonSuperior(botonCerrarSesion);
         botonCerrarSesion.addActionListener(e -> {
             this.dispose();

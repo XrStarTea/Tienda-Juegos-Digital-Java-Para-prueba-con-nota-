@@ -71,7 +71,7 @@ public class VentanaAdmin extends JFrame {
         btnGuardar = new JButton("Guardar");
         btnEliminar = new JButton("Eliminar");
         JButton btnModo = new JButton("Modo Oscuro");
-        JButton btnVolver = new JButton("Volver");
+        JButton btnVolver = new JButton("salir");
 
         panelBotones.add(btnAgregar);
         panelBotones.add(btnGuardar);
