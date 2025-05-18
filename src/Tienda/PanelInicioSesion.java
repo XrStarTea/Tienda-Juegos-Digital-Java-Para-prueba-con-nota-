@@ -17,28 +17,28 @@ public class PanelInicioSesion extends JPanel {
     private JButton btnVolver;
     private CardLayout cardLayout;
     private JPanel panelContenedor;
-    private JFrame ventanaPrincipal; // Para mostrar la ventana principal
-    private JFrame ventanaAdmin; // Para mostrar la ventana de administrador
+    private JFrame ventanaPrincipal;
+    private JFrame ventanaAdmin;
 
     public PanelInicioSesion(CardLayout layout, JPanel contenedor, JFrame ventanaPrin, JFrame ventanaAdm) {
         this.cardLayout = layout;
         this.panelContenedor = contenedor;
         this.ventanaPrincipal = ventanaPrin;
         this.ventanaAdmin = ventanaAdm;
-        setLayout(new GridLayout(4, 2, 5, 5)); // Volvemos a GridLayout
+        setLayout(new GridLayout(4, 2, 5, 5));
         setBackground(new Color(204, 204, 204));
         setBorder(BorderFactory.createEmptyBorder(10, 30, 10, 30));
 
         Font fuentePequena = new Font("Segoe UI", Font.PLAIN, 14);
         Dimension botonDimension = new Dimension(90, 25);
-        Dimension textFieldDimension = new Dimension(150, 10); // Reducir la altura preferida
+        Dimension textFieldDimension = new Dimension(150, 10);
 
         JLabel lblUsuario = new JLabel("Usuario:");
         lblUsuario.setFont(fuentePequena);
         add(lblUsuario);
         txtUsuario = new JTextField(15);
         txtUsuario.setFont(fuentePequena);
-        txtUsuario.setPreferredSize(textFieldDimension); // Establecer altura preferida
+        txtUsuario.setPreferredSize(textFieldDimension);
         add(txtUsuario);
 
         JLabel lblContrasena = new JLabel("Contraseña:");
@@ -46,25 +46,24 @@ public class PanelInicioSesion extends JPanel {
         add(lblContrasena);
         txtContrasena = new JPasswordField(15);
         txtContrasena.setFont(fuentePequena);
-        txtContrasena.setPreferredSize(textFieldDimension); // Establecer altura preferida
+        txtContrasena.setPreferredSize(textFieldDimension);
         add(txtContrasena);
 
-        // Panel para los botones con FlowLayout
         JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
-        panelBotones.setOpaque(false); // Hacer el fondo del panel transparente
+        panelBotones.setOpaque(false);
 
         btnVolver = new JButton("Volver");
         btnVolver.setFont(fuentePequena);
         btnVolver.setPreferredSize(botonDimension);
-        panelBotones.add(btnVolver); // Se eliminaron las líneas de transparencia del botón
+        panelBotones.add(btnVolver);
 
         btnIniciar = new JButton("Iniciar");
         btnIniciar.setFont(fuentePequena);
         btnIniciar.setPreferredSize(botonDimension);
-        panelBotones.add(btnIniciar); // Se eliminaron las líneas de transparencia del botón
+        panelBotones.add(btnIniciar);
 
-        add(new JLabel()); // Celda vacía en la tercera fila, primera columna
-        add(panelBotones); // Panel de botones en la tercera fila, segunda columna
+        add(new JLabel());
+        add(panelBotones);
 
         btnIniciar.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt) {
@@ -82,7 +81,7 @@ public class PanelInicioSesion extends JPanel {
 
                 try {
                     connection = ConexionDB.conectar();
-                    String sql = "SELECT rol, contrasena FROM usuarios WHERE usuario = ?";
+                    String sql = "SELECT id, rol, contrasena FROM usuarios WHERE usuario = ?";
                     preparedStatement = connection.prepareStatement(sql);
                     preparedStatement.setString(1, usuario);
                     resultSet = preparedStatement.executeQuery();
@@ -90,12 +89,15 @@ public class PanelInicioSesion extends JPanel {
                     if (resultSet.next()) {
                         String rol = resultSet.getString("rol");
                         String contrasenaBD = resultSet.getString("contrasena");
+                        int idUsuario = resultSet.getInt("id");
+                        System.out.println("PanelInicioSesion: Usuario: " + usuario + ", ID de usuario: " + idUsuario);
 
                         if (contrasena.equals(contrasenaBD)) {
                             JOptionPane.showMessageDialog(PanelInicioSesion.this, "Inicio de sesión exitoso.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
                             if (rol.equals("admin")) {
                                 ventanaAdmin.setVisible(true);
                             } else {
+                                ventanaPrincipal = new VentanaPrincipal((VentanaIDS) SwingUtilities.getWindowAncestor(PanelInicioSesion.this), idUsuario);
                                 ventanaPrincipal.setVisible(true);
                             }
                             JFrame ventanaIDS = (JFrame) SwingUtilities.getWindowAncestor(PanelInicioSesion.this);

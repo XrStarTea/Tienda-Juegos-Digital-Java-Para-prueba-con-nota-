@@ -12,8 +12,12 @@ public class VentanaCarrito extends JPanel {
     private JTable tablaCarrito;
     private List<Producto> productosEnCarrito;
     private JLabel labelTotal;
+    private JPanel panelContenido;
+    private CardLayout cardLayout;
 
     public VentanaCarrito(CardLayout cardLayout, JPanel panelContenido) {
+        this.cardLayout = cardLayout;
+        this.panelContenido = panelContenido;
         setLayout(new BorderLayout());
         setBackground(Color.WHITE);
         productosEnCarrito = new ArrayList<>();
@@ -201,6 +205,18 @@ public class VentanaCarrito extends JPanel {
         );
 
         if (opcion == JOptionPane.OK_OPTION) {
+            VentanaBiblioteca biblioteca = null;
+            for (Component comp : panelContenido.getComponents()) {
+                if (comp instanceof VentanaBiblioteca) {
+                    biblioteca = (VentanaBiblioteca) comp;
+                    break;
+                }
+            }
+            
+            if (biblioteca != null) {
+                biblioteca.agregarJuegosComprados(new ArrayList<>(productosEnCarrito));
+            }
+            
             JOptionPane.showMessageDialog(this, "Compra realizada con éxito", "Éxito", JOptionPane.INFORMATION_MESSAGE);
             vaciarCarrito(null);
         }

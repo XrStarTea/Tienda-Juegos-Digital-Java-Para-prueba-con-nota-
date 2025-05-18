@@ -34,7 +34,7 @@ public class VentanaIDS extends JFrame {
 
     public VentanaIDS() {
         // Inicializar las ventanas principales (por ahora, solo la instancia)
-        ventanaPrincipal = new VentanaPrincipal(this);
+        //ventanaPrincipal = new VentanaPrincipal(this);
         ventanaAdmin = new VentanaAdmin();
         
         // Configuración básica de la ventana

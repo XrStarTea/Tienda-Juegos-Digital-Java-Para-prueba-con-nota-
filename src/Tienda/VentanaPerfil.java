@@ -2,68 +2,172 @@ package tienda;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.*;
+import java.awt.image.BufferedImage;
 
 public class VentanaPerfil extends JPanel {
+    private CardLayout cardLayout;
+    private JPanel panelContenido;
+
+    private JLabel lblImagenPerfil;
+    private JButton btnCambiarImagen;
+    private JLabel lblUsuarioNombre;
+    private JLabel lblNombreCompletoValor;
+    private Image fondoGeneral;
+    private Image fondoPerfil;
 
     public VentanaPerfil(CardLayout cardLayout, JPanel panelContenido) {
-        setLayout(new BorderLayout());
-        setBackground(Color.WHITE);
+        this.cardLayout = cardLayout;
+        this.panelContenido = panelContenido;
 
-        JPanel panelEdicion = new JPanel(new GridLayout(4, 2, 10, 10));
-        panelEdicion.setBackground(Color.WHITE);
-        panelEdicion.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        initComponentes();
+    }
 
-        JLabel labelNombre = new JLabel("Nombre:");
-        JTextField campoNombre = new JTextField(20);
+    private void initComponentes() {
+        setLayout(null);  // Layout absoluto para superponer imágenes y panel personalizado
+        setBackground(new Color(240, 240, 240));
 
-        JLabel labelCorreo = new JLabel("Correo:");
-        JTextField campoCorreo = new JTextField(20);
+        try {
+            fondoGeneral = new ImageIcon("src/tienda/imagenes/fondo.jpg").getImage();
+            fondoPerfil = new ImageIcon("src/tienda/imagenes/perfil.jpg").getImage();
+        } catch (Exception e) {
+            fondoGeneral = null;
+            fondoPerfil = null;
+        }
 
-        JLabel labelTelefono = new JLabel("Teléfono:");
-        JTextField campoTelefono = new JTextField(20);
+        // Panel principal perfil (fondo con sombra)
+        JPanel panelPerfil = new JPanel(null) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2d.setColor(new Color(0, 0, 0, 20));
+                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
+            }
+        };
+        panelPerfil.setOpaque(false);
+        panelPerfil.setBounds(30, 30, 340, 280);
+        add(panelPerfil);
 
-        JLabel labelDireccion = new JLabel("Dirección:");
-        JTextField campoDireccion = new JTextField(20);
+        // Fondo decorativo detrás imagen perfil
+        JLabel fondoImagenPerfil = new JLabel();
+        fondoImagenPerfil.setBounds(30, 30, 120, 120);
+        if (fondoPerfil != null) {
+            Image imgFondo = fondoPerfil.getScaledInstance(120, 120, Image.SCALE_SMOOTH);
+            fondoImagenPerfil.setIcon(new ImageIcon(imgFondo));
+        }
+        panelPerfil.add(fondoImagenPerfil);
 
-        panelEdicion.add(labelNombre);
-        panelEdicion.add(campoNombre);
-        panelEdicion.add(labelCorreo);
-        panelEdicion.add(campoCorreo);
-        panelEdicion.add(labelTelefono);
-        panelEdicion.add(campoTelefono);
-        panelEdicion.add(labelDireccion);
-        panelEdicion.add(campoDireccion);
+        // Imagen perfil redonda
+        lblImagenPerfil = new JLabel();
+        lblImagenPerfil.setBounds(30, 30, 120, 120);
+        lblImagenPerfil.setBorder(BorderFactory.createLineBorder(new Color(70, 130, 180), 2));
+        try {
+            ImageIcon originalIcon = new ImageIcon("src/tienda/imagenes/usuario.jpg");
+            Image img = originalIcon.getImage().getScaledInstance(120, 120, Image.SCALE_SMOOTH);
+            lblImagenPerfil.setIcon(new ImageIcon(makeRoundedImage(img, 60)));
+        } catch (Exception e) {
+            lblImagenPerfil.setIcon(new ImageIcon(makeRoundedImage(
+                new BufferedImage(120, 120, BufferedImage.TYPE_INT_ARGB), 60)));
+        }
+        panelPerfil.add(lblImagenPerfil);
+        panelPerfil.setComponentZOrder(lblImagenPerfil, 0);
 
-        JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        panelBotones.setBackground(Color.WHITE);
+        // Botón cambiar imagen
+        btnCambiarImagen = new JButton("Cambiar Imagen");
+        btnCambiarImagen.setBounds(30, 160, 140, 35);
+        btnCambiarImagen.setBackground(new Color(30, 144, 255));
+        btnCambiarImagen.setForeground(Color.WHITE);
+        btnCambiarImagen.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15));
+        btnCambiarImagen.setFocusPainted(false);
+        btnCambiarImagen.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        btnCambiarImagen.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent evt) {
+                btnCambiarImagen.setBackground(new Color(0, 105, 217));
+                btnCambiarImagen.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            }
+            public void mouseExited(MouseEvent evt) {
+                btnCambiarImagen.setBackground(new Color(30, 144, 255));
+            }
+        });
+        btnCambiarImagen.addActionListener(e -> cambiarImagenPerfil());
+        panelPerfil.add(btnCambiarImagen);
 
-        JButton botonVolver = new JButton("Volver");
-        botonVolver.setFont(new Font("Arial", Font.BOLD, 12));
-        botonVolver.setBackground(new Color(0, 123, 255));
-        botonVolver.setForeground(Color.WHITE);
-        botonVolver.setFocusPainted(false);
-        botonVolver.setPreferredSize(new Dimension(80, 30));
-        botonVolver.addActionListener(e -> cardLayout.show(panelContenido, "Tienda"));
+        // Etiqueta Usuario
+        JLabel lblUsuarioTexto = new JLabel("Usuario:");
+        lblUsuarioTexto.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        lblUsuarioTexto.setForeground(Color.WHITE);
+        lblUsuarioTexto.setBounds(170, 50, 160, 30);
+        panelPerfil.add(lblUsuarioTexto);
 
-        JButton botonGuardar = new JButton("Guardar Cambios");
-        botonGuardar.setFont(new Font("Arial", Font.BOLD, 12));
-        botonGuardar.setBackground(new Color(40, 167, 69));
-        botonGuardar.setForeground(Color.WHITE);
-        botonGuardar.setFocusPainted(false);
-        botonGuardar.setPreferredSize(new Dimension(120, 30));
+        lblUsuarioNombre = new JLabel("\"nombre de usuario\"");
+        lblUsuarioNombre.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        lblUsuarioNombre.setForeground(Color.WHITE);
+        lblUsuarioNombre.setBounds(170, 80, 160, 30);
+        panelPerfil.add(lblUsuarioNombre);
 
-        JButton botonEliminar = new JButton("Eliminar Perfil");
-        botonEliminar.setFont(new Font("Arial", Font.BOLD, 12));
-        botonEliminar.setBackground(new Color(220, 53, 69));
-        botonEliminar.setForeground(Color.WHITE);
-        botonEliminar.setFocusPainted(false);
-        botonEliminar.setPreferredSize(new Dimension(120, 30));
+        // Etiqueta Nombre Completo
+        JLabel lblNombreCompletoTexto = new JLabel("Nombre Completo:");
+        lblNombreCompletoTexto.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        lblNombreCompletoTexto.setForeground(Color.WHITE);
+        lblNombreCompletoTexto.setBounds(30, 210, 200, 30);
+        panelPerfil.add(lblNombreCompletoTexto);
 
-        panelBotones.add(botonVolver);
-        panelBotones.add(botonGuardar);
-        panelBotones.add(botonEliminar);
+        lblNombreCompletoValor = new JLabel("\"nombre completo\"");
+        lblNombreCompletoValor.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        lblNombreCompletoValor.setForeground(Color.WHITE);
+        lblNombreCompletoValor.setBounds(30, 240, 300, 30);
+        panelPerfil.add(lblNombreCompletoValor);
 
-        add(panelEdicion, BorderLayout.CENTER);
-        add(panelBotones, BorderLayout.SOUTH);
+        // Botón Volver centrado debajo
+        JButton btnVolver = new JButton("Volver");
+        btnVolver.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        btnVolver.setBackground(new Color(0, 123, 255));
+        btnVolver.setForeground(Color.WHITE);
+        btnVolver.setFocusPainted(false);
+        btnVolver.setBounds(120, 320, 140, 40);
+        btnVolver.addActionListener(e -> cardLayout.show(panelContenido, "Tienda"));
+        add(btnVolver);
+    }
+
+    private Image makeRoundedImage(Image image, int radius) {
+        int width = image.getWidth(null);
+        int height = image.getHeight(null);
+        BufferedImage rounded = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2 = rounded.createGraphics();
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setClip(new java.awt.geom.RoundRectangle2D.Float(0, 0, width, height, radius, radius));
+        g2.drawImage(image, 0, 0, null);
+        g2.dispose();
+        return rounded;
+    }
+
+    private void cambiarImagenPerfil() {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Seleccionar nueva imagen de perfil");
+        int result = chooser.showOpenDialog(this);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            ImageIcon nuevaImagen = new ImageIcon(chooser.getSelectedFile().getAbsolutePath());
+            Image img = nuevaImagen.getImage().getScaledInstance(120, 120, Image.SCALE_SMOOTH);
+            lblImagenPerfil.setIcon(new ImageIcon(makeRoundedImage(img, 60)));
+        }
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        if (fondoGeneral != null) {
+            g.drawImage(fondoGeneral, 0, 0, getWidth(), getHeight(), this);
+        }
+    }
+
+    // Métodos para actualizar datos del usuario
+    public void setNombreUsuario(String nombreUsuario) {
+        lblUsuarioNombre.setText("\"" + nombreUsuario + "\"");
+    }
+
+    public void setNombreCompleto(String nombreCompleto) {
+        lblNombreCompletoValor.setText("\"" + nombreCompleto + "\"");
     }
 }

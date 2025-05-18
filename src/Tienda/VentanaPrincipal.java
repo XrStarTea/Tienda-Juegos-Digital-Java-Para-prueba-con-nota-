@@ -9,9 +9,16 @@ public class VentanaPrincipal extends JFrame {
     private JPanel panelContenido;
     private VentanaIDS ventanaIDS;
     private VentanaCarrito ventanaCarrito;
+    private int idUsuarioLogueado;
 
-    public VentanaPrincipal(VentanaIDS ventanaIDS) {
+    // Nuevo método para establecer el ID del usuario logueado
+    public void setIdUsuarioLogueado(int idUsuario) {
+        this.idUsuarioLogueado = idUsuario;
+    }
+
+    public VentanaPrincipal(VentanaIDS ventanaIDS, int idUsuarioLogueado) {
         this.ventanaIDS = ventanaIDS;
+        this.idUsuarioLogueado = idUsuarioLogueado;
         setTitle("Tienda de Juegos");
         setSize(800, 710);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -26,7 +33,8 @@ public class VentanaPrincipal extends JFrame {
         // Crear paneles pasando las dependencias necesarias
         JPanel panelTienda = new VentanaTienda(cardLayout, panelContenido, ventanaCarrito);
         JPanel panelPerfil = new VentanaPerfil(cardLayout, panelContenido);
-        JPanel panelSoporte = new VentanaSoporte(cardLayout, panelContenido);
+        // Aquí se inicializa VentanaSoporte con el idUsuarioLogueado
+        JPanel panelSoporte = new VentanaSoporte(cardLayout, panelContenido, this.idUsuarioLogueado);
         JPanel panelBiblioteca = new VentanaBiblioteca(cardLayout, panelContenido);
 
         panelContenido.add(panelTienda, "Tienda");
@@ -64,7 +72,11 @@ public class VentanaPrincipal extends JFrame {
 
         JButton botonSoporte = new JButton("Soporte");
         configurarBotonSuperior(botonSoporte);
-        botonSoporte.addActionListener(e -> cardLayout.show(panelContenido, "Soporte"));
+        // Se modifica el action listener del boton soporte para pasar el idUsuarioLogueado
+        botonSoporte.addActionListener(e -> {
+            ((VentanaSoporte) panelContenido.getComponent(2)).setIdUsuarioLogueado(idUsuarioLogueado);
+            cardLayout.show(panelContenido, "Soporte");
+        });
         panelBotonesDerecha.add(botonSoporte);
 
         JButton botonPerfil = new JButton("Perfil");
