@@ -12,10 +12,12 @@ public class VentanaTienda extends JPanel {
 
     private CardLayout cardLayout;
     private JPanel panelContenido;
+    private VentanaCarrito ventanaCarrito;
 
-    public VentanaTienda(CardLayout cardLayout, JPanel panelContenido) {
+    public VentanaTienda(CardLayout cardLayout, JPanel panelContenido, VentanaCarrito ventanaCarrito) {
         this.cardLayout = cardLayout;
         this.panelContenido = panelContenido;
+        this.ventanaCarrito = ventanaCarrito;
         setLayout(new BorderLayout());
         add(crearPanelTienda(), BorderLayout.CENTER);
     }
@@ -60,7 +62,6 @@ public class VentanaTienda extends JPanel {
             panelJuegos.repaint();
         };
 
-        // Código de botones de navegación...
         JLabel btnIzq = crearBotonNavegacion("<", () -> {
             if (paginaActual[0] > 0) {
                 paginaActual[0]--;
@@ -121,53 +122,45 @@ public class VentanaTienda extends JPanel {
     }
 
     private JLabel cargarImagenJuego(String nombreImagen) {
-    if (nombreImagen == null || nombreImagen.isEmpty()) {
-        return crearLabelSinImagen();
-    }
-
-    System.out.println("DEBUG - Intentando cargar: " + nombreImagen);
-    
-    try {
-        // Opción 1: Cargar como recurso embebido
-        URL imgUrl = getClass().getResource("/tienda/imagenes/" + nombreImagen);
-        if (imgUrl != null) {
-            System.out.println("DEBUG - Imagen encontrada como recurso: " + imgUrl);
-            ImageIcon icon = new ImageIcon(imgUrl);
-            if (icon.getImageLoadStatus() == MediaTracker.COMPLETE) {
-                return crearLabelDesdeImagen(icon.getImage());
-            }
+        if (nombreImagen == null || nombreImagen.isEmpty()) {
+            return crearLabelSinImagen();
         }
 
-        // Opción 2: Cargar desde sistema de archivos (para desarrollo)
-        String rutaBase = System.getProperty("user.dir");
-        String[] rutasPrueba = {
-            rutaBase + "/src/tienda/imagenes/" + nombreImagen,  // NetBeans
-            rutaBase + "/build/classes/tienda/imagenes/" + nombreImagen,  // Directorio de compilación
-            "src/tienda/imagenes/" + nombreImagen  // Ruta relativa
-        };
-
-        for (String ruta : rutasPrueba) {
-            System.out.println("DEBUG - Probando ruta: " + ruta);
-            ImageIcon icon = new ImageIcon(ruta);
-            if (icon.getImageLoadStatus() == MediaTracker.COMPLETE) {
-                System.out.println("DEBUG - Imagen cargada desde: " + ruta);
-                return crearLabelDesdeImagen(icon.getImage());
+        try {
+            URL imgUrl = getClass().getResource("/tienda/imagenes/" + nombreImagen);
+            if (imgUrl != null) {
+                ImageIcon icon = new ImageIcon(imgUrl);
+                if (icon.getImageLoadStatus() == MediaTracker.COMPLETE) {
+                    return crearLabelDesdeImagen(icon.getImage());
+                }
             }
+
+            String rutaBase = System.getProperty("user.dir");
+            String[] rutasPrueba = {
+                rutaBase + "/src/tienda/imagenes/" + nombreImagen,
+                rutaBase + "/build/classes/tienda/imagenes/" + nombreImagen,
+                "src/tienda/imagenes/" + nombreImagen
+            };
+
+            for (String ruta : rutasPrueba) {
+                ImageIcon icon = new ImageIcon(ruta);
+                if (icon.getImageLoadStatus() == MediaTracker.COMPLETE) {
+                    return crearLabelDesdeImagen(icon.getImage());
+                }
+            }
+
+            return crearLabelErrorImagen();
+
+        } catch (Exception e) {
+            return crearLabelErrorImagen();
         }
-
-        System.out.println("ERROR - No se encontró la imagen en ninguna ubicación");
-        return crearLabelErrorImagen();
-
-    } catch (Exception e) {
-        System.err.println("ERROR - Excepción al cargar imagen: " + e.getMessage());
-        return crearLabelErrorImagen();
     }
-}
 
     private JLabel crearLabelDesdeImagen(Image image) {
         Image img = image.getScaledInstance(230, 180, Image.SCALE_SMOOTH);
         return new JLabel(new ImageIcon(img));
     }
+
     private JLabel crearLabelSinImagen() {
         JLabel label = new JLabel("Sin imagen", JLabel.CENTER);
         label.setPreferredSize(new Dimension(230, 180));
@@ -202,11 +195,13 @@ public class VentanaTienda extends JPanel {
         return new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
+                String descripcionCompleta = descripcion + "\n\nPrecio: CLP$ " + precio;
                 VentanaDescripcion ventanaDescripcion = new VentanaDescripcion(
                     nombre,
-                    descripcion + "\n\nPrecio: CLP$ " + precio,
+                    descripcionCompleta,
                     cardLayout,
-                    panelContenido
+                    panelContenido,
+                    ventanaCarrito
                 );
                 panelContenido.add(ventanaDescripcion, "DetalleJuego");
                 cardLayout.show(panelContenido, "DetalleJuego");
