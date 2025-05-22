@@ -98,7 +98,7 @@ public class VentanaCarrito extends JPanel {
     }
 
     // Método para agregar productos desde la tienda
-    public void agregarProductoDesdeTienda(String nombre, double precio) {
+    public void agregarProductoDesdeTienda(String nombre, double precio, String imagen) {
         // Verificar si el producto ya está en el carrito
         for (int i = 0; i < productosEnCarrito.size(); i++) {
             Producto p = productosEnCarrito.get(i);
@@ -112,7 +112,7 @@ public class VentanaCarrito extends JPanel {
         }
 
         // Si no existe, agregarlo como nuevo
-        Producto nuevoProducto = new Producto(nombre, precio, 1);
+        Producto nuevoProducto = new Producto(nombre, precio, 1, imagen);
         productosEnCarrito.add(nuevoProducto);
         modeloTabla.addRow(new Object[]{
             nombre,
@@ -240,16 +240,19 @@ public class VentanaCarrito extends JPanel {
         private String nombre;
         private double precio;
         private int cantidad;
+        private String imagen;
 
-        public Producto(String nombre, double precio, int cantidad) {
+        public Producto(String nombre, double precio, int cantidad, String imagen) {
             this.nombre = nombre;
             this.precio = precio;
             this.cantidad = cantidad;
+            this.imagen = imagen;
         }
 
         public String getNombre() { return nombre; }
         public double getPrecio() { return precio; }
         public int getCantidad() { return cantidad; }
         public void setCantidad(int cantidad) { this.cantidad = cantidad; }
+        public String getImagen() { return imagen; }
     }
 }

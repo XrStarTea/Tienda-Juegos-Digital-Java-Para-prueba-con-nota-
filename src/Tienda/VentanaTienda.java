@@ -113,7 +113,7 @@ public class VentanaTienda extends JPanel {
         JLabel labelNombre = crearLabelNombre(nombre);
         JLabel labelPrecio = crearLabelPrecio(precio);
 
-        panel.addMouseListener(crearMouseListener(nombre, descripcion, precio));
+        panel.addMouseListener(crearMouseListener(nombre, descripcion, precio, imagen));
         panel.add(labelImagen, BorderLayout.NORTH);
         panel.add(labelNombre, BorderLayout.CENTER);
         panel.add(labelPrecio, BorderLayout.SOUTH);
@@ -191,7 +191,7 @@ public class VentanaTienda extends JPanel {
         return label;
     }
 
-    private MouseAdapter crearMouseListener(String nombre, String descripcion, int precio) {
+    private MouseAdapter crearMouseListener(String nombre, String descripcion, int precio, String imagen) {
         return new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -201,7 +201,8 @@ public class VentanaTienda extends JPanel {
                     descripcionCompleta,
                     cardLayout,
                     panelContenido,
-                    ventanaCarrito
+                    ventanaCarrito,
+                        imagen
                 );
                 panelContenido.add(ventanaDescripcion, "DetalleJuego");
                 cardLayout.show(panelContenido, "DetalleJuego");

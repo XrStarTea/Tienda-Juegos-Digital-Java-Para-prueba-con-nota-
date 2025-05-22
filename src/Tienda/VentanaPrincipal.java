@@ -42,7 +42,7 @@ public class VentanaPrincipal extends JFrame {
         panelContenido.add(panelSoporte, "Soporte");
         panelContenido.add(ventanaCarrito, "Carrito");
         panelContenido.add(panelBiblioteca, "Biblioteca");
-        panelContenido.add(new VentanaDescripcion("", "", cardLayout, panelContenido, ventanaCarrito), "DetalleJuego");
+        //panelContenido.add(new VentanaDescripcion("", "", cardLayout, panelContenido, ventanaCarrito), "DetalleJuego");
 
         add(panelContenido, BorderLayout.CENTER);
 

@@ -7,12 +7,13 @@ import java.awt.event.ActionEvent;
 public class VentanaDescripcion extends JPanel {
     
     public VentanaDescripcion(String nombreJuego, String descripcionJuego, CardLayout cardLayout, 
-                            JPanel panelContenido, VentanaCarrito ventanaCarrito) {
+                            JPanel panelContenido, VentanaCarrito ventanaCarrito, String imagenJuego) {
         setLayout(new BorderLayout());
         setBackground(Color.WHITE);
         
         // Hacemos copias finales de las variables que usaremos en el lambda
         final String nombre = nombreJuego;
+        final String imagen = imagenJuego;
         
         JLabel labelTitulo = new JLabel(nombre, SwingConstants.CENTER);
         labelTitulo.setFont(new Font("Arial", Font.BOLD, 20));
@@ -41,7 +42,7 @@ public class VentanaDescripcion extends JPanel {
         
         JButton botonAgregarCarrito = new JButton("Agregar al Carrito");
         botonAgregarCarrito.addActionListener((ActionEvent e) -> {
-            ventanaCarrito.agregarProductoDesdeTienda(nombre, precio[0]);
+            ventanaCarrito.agregarProductoDesdeTienda(nombre, precio[0], imagen);
             JOptionPane.showMessageDialog(this, nombre + " agregado al carrito", "Éxito", JOptionPane.INFORMATION_MESSAGE);
         });
         

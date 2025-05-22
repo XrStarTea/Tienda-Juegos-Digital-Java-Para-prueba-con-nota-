@@ -3,6 +3,7 @@ package tienda;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.net.URL; // Import URL for resource loading
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,7 +53,19 @@ public class VentanaBiblioteca extends JPanel {
 
     // Método para agregar juegos comprados a la biblioteca
     public void agregarJuegosComprados(List<VentanaCarrito.Producto> productos) {
-        productosComprados.addAll(productos);
+        // Only add products that are not already in the library to avoid duplicates
+        for (VentanaCarrito.Producto nuevoProducto : productos) {
+            boolean found = false;
+            for (VentanaCarrito.Producto existenteProducto : productosComprados) {
+                if (existenteProducto.getNombre().equals(nuevoProducto.getNombre())) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                productosComprados.add(nuevoProducto);
+            }
+        }
         actualizarBiblioteca();
     }
 
@@ -75,18 +88,7 @@ public class VentanaBiblioteca extends JPanel {
         card.setPreferredSize(new Dimension(200, 250));
 
         // Imagen del juego (usando el nombre para buscar la imagen correspondiente)
-        ImageIcon icono = cargarImagenJuego(producto.getNombre());
-        JLabel labelImagen = new JLabel();
-        
-        if (icono != null) {
-            // Escalar la imagen si es necesario
-            Image imagen = icono.getImage().getScaledInstance(180, 180, Image.SCALE_SMOOTH);
-            labelImagen.setIcon(new ImageIcon(imagen));
-        } else {
-            labelImagen.setIcon(new ImageIcon()); // Icono vacío si no hay imagen
-            labelImagen.setText("Imagen no disponible");
-            labelImagen.setHorizontalAlignment(SwingConstants.CENTER);
-        }
+        JLabel labelImagen = cargarImagenJuego(producto.getImagen()); // Use producto.getImagen()
         
         labelImagen.setHorizontalAlignment(SwingConstants.CENTER);
         labelImagen.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -110,25 +112,64 @@ public class VentanaBiblioteca extends JPanel {
         return card;
     }
 
-    private ImageIcon cargarImagenJuego(String nombreJuego) {
-        // Aquí deberías implementar la lógica para cargar la imagen correspondiente al juego
-        // Por ejemplo, podrías tener una carpeta de recursos con imágenes nombradas según los juegos
-        
-        // Esto es un ejemplo básico - en una implementación real, deberías cargar las imágenes
-        // desde archivos o recursos del proyecto
+    // This method is adapted from VentanaTienda's cargarImagenJuego
+    private JLabel cargarImagenJuego(String nombreImagen) {
+        if (nombreImagen == null || nombreImagen.isEmpty()) {
+            return crearLabelSinImagen();
+        }
+
         try {
-            // Simulación: si el nombre contiene "Mario", usar una imagen de Mario
-            if (nombreJuego.toLowerCase().contains("mario")) {
-                return new ImageIcon("ruta/a/imagenes/mario.jpg"); // Reemplazar con ruta real
-            } else if (nombreJuego.toLowerCase().contains("zelda")) {
-                return new ImageIcon("ruta/a/imagenes/zelda.jpg"); // Reemplazar con ruta real
+            URL imgUrl = getClass().getResource("/tienda/imagenes/" + nombreImagen);
+            if (imgUrl != null) {
+                ImageIcon icon = new ImageIcon(imgUrl);
+                if (icon.getImageLoadStatus() == MediaTracker.COMPLETE) {
+                    return crearLabelDesdeImagen(icon.getImage());
+                }
             }
-            // Añadir más casos según tus juegos
+
+            // Fallback for development environments if loading from resources fails
+            String rutaBase = System.getProperty("user.dir");
+            String[] rutasPrueba = {
+                rutaBase + "/src/tienda/imagenes/" + nombreImagen,
+                rutaBase + "/build/classes/tienda/imagenes/" + nombreImagen,
+                "src/tienda/imagenes/" + nombreImagen
+            };
+
+            for (String ruta : rutasPrueba) {
+                ImageIcon icon = new ImageIcon(ruta);
+                if (icon.getImageLoadStatus() == MediaTracker.COMPLETE) {
+                    return crearLabelDesdeImagen(icon.getImage());
+                }
+            }
+
+            return crearLabelErrorImagen();
+
         } catch (Exception e) {
             e.printStackTrace();
+            return crearLabelErrorImagen();
         }
-        
-        return null;
+    }
+
+    private JLabel crearLabelDesdeImagen(Image image) {
+        // Adjust the size for the library cards
+        Image img = image.getScaledInstance(180, 180, Image.SCALE_SMOOTH); 
+        return new JLabel(new ImageIcon(img));
+    }
+
+    private JLabel crearLabelSinImagen() {
+        JLabel label = new JLabel("Sin imagen", JLabel.CENTER);
+        label.setPreferredSize(new Dimension(180, 180)); // Consistent size
+        label.setFont(new Font("Arial", Font.ITALIC, 14));
+        label.setForeground(Color.RED);
+        return label;
+    }
+
+    private JLabel crearLabelErrorImagen() {
+        JLabel label = new JLabel("Imagen no encontrada", JLabel.CENTER);
+        label.setPreferredSize(new Dimension(180, 180)); // Consistent size
+        label.setFont(new Font("Arial", Font.ITALIC, 14));
+        label.setForeground(Color.RED);
+        return label;
     }
 
     // Método para verificar si un juego ya está en la biblioteca
