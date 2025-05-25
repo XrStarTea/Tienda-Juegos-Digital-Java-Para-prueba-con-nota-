@@ -7,8 +7,10 @@ public class VentanaPrincipal extends JFrame {
 
     private CardLayout cardLayout;
     private JPanel panelContenido;
+    private VentanaTienda ventanaTienda;
     private VentanaIDS ventanaIDS;
     private VentanaCarrito ventanaCarrito;
+    private VentanaBiblioteca ventanaBiblioteca; // <--- Esta es la variable de instancia
     private int idUsuarioLogueado;
 
     // Nuevo método para establecer el ID del usuario logueado
@@ -28,20 +30,24 @@ public class VentanaPrincipal extends JFrame {
         panelContenido = new JPanel(cardLayout);
 
         // Crear el carrito primero
-        ventanaCarrito = new VentanaCarrito(cardLayout, panelContenido);
+        ventanaCarrito = new VentanaCarrito(cardLayout, panelContenido, idUsuarioLogueado);
 
         // Crear paneles pasando las dependencias necesarias
-        JPanel panelTienda = new VentanaTienda(cardLayout, panelContenido, ventanaCarrito);
+        // Asigna a la variable de instancia 'ventanaTienda'
+        ventanaTienda = new VentanaTienda(cardLayout, panelContenido, ventanaCarrito);
         JPanel panelPerfil = new VentanaPerfil(cardLayout, panelContenido);
         // Aquí se inicializa VentanaSoporte con el idUsuarioLogueado
         JPanel panelSoporte = new VentanaSoporte(cardLayout, panelContenido, this.idUsuarioLogueado);
-        JPanel panelBiblioteca = new VentanaBiblioteca(cardLayout, panelContenido);
+        
+        // ¡¡¡CAMBIO CLAVE AQUÍ!!!
+        // Asigna la instancia creada a la variable de instancia 'this.ventanaBiblioteca'
+        this.ventanaBiblioteca = new VentanaBiblioteca(cardLayout, panelContenido, idUsuarioLogueado); // <--- ¡CAMBIO AQUÍ!
 
-        panelContenido.add(panelTienda, "Tienda");
+        panelContenido.add(ventanaTienda, "Tienda"); // Usa la variable de instancia
         panelContenido.add(panelPerfil, "Perfil");
         panelContenido.add(panelSoporte, "Soporte");
         panelContenido.add(ventanaCarrito, "Carrito");
-        panelContenido.add(panelBiblioteca, "Biblioteca");
+        panelContenido.add(this.ventanaBiblioteca, "Biblioteca"); // <--- Usa la variable de instancia
         //panelContenido.add(new VentanaDescripcion("", "", cardLayout, panelContenido, ventanaCarrito), "DetalleJuego");
 
         add(panelContenido, BorderLayout.CENTER);
@@ -67,7 +73,11 @@ public class VentanaPrincipal extends JFrame {
 
         JButton botonBiblioteca = new JButton("Biblioteca");
         configurarBotonSuperior(botonBiblioteca);
-        botonBiblioteca.addActionListener(e -> cardLayout.show(panelContenido, "Biblioteca"));
+        botonBiblioteca.addActionListener(e -> {
+            // Ahora 'this.ventanaBiblioteca' ya no será null
+            this.ventanaBiblioteca.cargarJuegosCompradosDesdeDB(idUsuarioLogueado); // <--- AHORA ESTA LÍNEA FUNCIONARÁ
+            cardLayout.show(panelContenido, "Biblioteca");
+        });
         panelBotonesDerecha.add(botonBiblioteca);
 
         JButton botonSoporte = new JButton("Soporte");

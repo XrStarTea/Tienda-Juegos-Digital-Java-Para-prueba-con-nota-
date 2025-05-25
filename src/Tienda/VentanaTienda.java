@@ -7,6 +7,7 @@ import java.net.URL;
 import java.sql.*;
 import java.util.ArrayList;
 import javax.swing.*;
+import tienda.JuegoTienda; // <--- ¡Añade esta línea!
 
 public class VentanaTienda extends JPanel {
 
@@ -32,16 +33,17 @@ public class VentanaTienda extends JPanel {
         java.util.List<JPanel> juegosPaneles = new ArrayList<>();
 
         try (Connection con = ConexionDB.conectar();
-             Statement stmt = con.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT * FROM juegos")) {
+        Statement stmt = con.createStatement();
+        ResultSet rs = stmt.executeQuery("SELECT id, nombre, imagen, precio, descripcion FROM juegos")) { // <--- AÑADE EL PARÉNTESIS Y PUNTO Y COMA
+        while (rs.next()) {
+            int idJuego = rs.getInt("id"); // <--- CAMBIADO 'id_juego' a 'id'
+            String nombre = rs.getString("nombre");
+            String imagen = rs.getString("imagen");
+            int precio = rs.getInt("precio");
+            String descripcion = rs.getString("descripcion");
 
-            while (rs.next()) {
-                String nombre = rs.getString("nombre");
-                String imagen = rs.getString("imagen");
-                int precio = rs.getInt("precio");
-                String descripcion = rs.getString("descripcion");
-
-                juegosPaneles.add(crearPanelJuego(nombre, imagen, precio, descripcion));
+            // Ahora pasamos el idJuego a crearPanelJuego
+            juegosPaneles.add(crearPanelJuego(idJuego, nombre, imagen, precio, descripcion)); // <--- MODIFICADO
             }
 
         } catch (SQLException e) {
@@ -103,7 +105,7 @@ public class VentanaTienda extends JPanel {
         return boton;
     }
 
-    private JPanel crearPanelJuego(String nombre, String imagen, int precio, String descripcion) {
+        private JPanel crearPanelJuego(int idJuego, String nombre, String imagen, int precio, String descripcion) { // <--- MODIFICADO
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(new Color(173, 216, 230));
         panel.setPreferredSize(new Dimension(230, 300));
@@ -113,7 +115,8 @@ public class VentanaTienda extends JPanel {
         JLabel labelNombre = crearLabelNombre(nombre);
         JLabel labelPrecio = crearLabelPrecio(precio);
 
-        panel.addMouseListener(crearMouseListener(nombre, descripcion, precio, imagen));
+        // AHORA LLAMAS A crearMouseListener CON EL ID DEL JUEGO
+        panel.addMouseListener(crearMouseListener(idJuego, nombre, descripcion, precio, imagen)); // <--- ESTO YA ESTÁ CORRECTO EN TU CÓDIGO
         panel.add(labelImagen, BorderLayout.NORTH);
         panel.add(labelNombre, BorderLayout.CENTER);
         panel.add(labelPrecio, BorderLayout.SOUTH);
@@ -191,22 +194,26 @@ public class VentanaTienda extends JPanel {
         return label;
     }
 
-    private MouseAdapter crearMouseListener(String nombre, String descripcion, int precio, String imagen) {
-        return new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                String descripcionCompleta = descripcion + "\n\nPrecio: CLP$ " + precio;
-                VentanaDescripcion ventanaDescripcion = new VentanaDescripcion(
-                    nombre,
-                    descripcionCompleta,
-                    cardLayout,
-                    panelContenido,
-                    ventanaCarrito,
-                        imagen
-                );
-                panelContenido.add(ventanaDescripcion, "DetalleJuego");
-                cardLayout.show(panelContenido, "DetalleJuego");
-            }
-        };
-    }
+    private MouseAdapter crearMouseListener(int idJuego, String nombre, String descripcion, int precio, String imagen) { // <--- MODIFICADO
+    return new MouseAdapter() {
+        @Override
+        public void mouseClicked(MouseEvent e) {
+            // Ya no necesitas construir la descripción completa aquí, VentanaDescripcion la usará directamente
+            // String descripcionCompleta = descripcion + "\n\nPrecio: CLP$ " + precio; // BORRA ESTA LÍNEA
+
+            // Crea el objeto JuegoTienda con TODOS los datos, incluido el ID
+            JuegoTienda juegoSeleccionado = new JuegoTienda(idJuego, nombre, descripcion, precio, imagen); // <--- ¡CREA EL OBJETO AQUÍ!
+
+            VentanaDescripcion ventanaDescripcion = new VentanaDescripcion(
+                juegoSeleccionado,  // <--- ¡PASAS EL OBJETO JUEGOTIENDA COMPLETO!
+                cardLayout,
+                panelContenido,
+                ventanaCarrito
+            );
+            // Asegúrate de que "DetalleJuego" sea el nombre correcto de la tarjeta en tu CardLayout
+            panelContenido.add(ventanaDescripcion, "DetalleJuego");
+            cardLayout.show(panelContenido, "DetalleJuego");
+        }
+    };
+}
 }

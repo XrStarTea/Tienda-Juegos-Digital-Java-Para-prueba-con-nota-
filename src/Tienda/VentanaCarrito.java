@@ -6,6 +6,9 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.sql.Connection;       // Importar Connection
+import java.sql.PreparedStatement; // Importar PreparedStatement
+import java.sql.SQLException;      // Importar SQLException
 
 public class VentanaCarrito extends JPanel {
     private DefaultTableModel modeloTabla;
@@ -14,10 +17,12 @@ public class VentanaCarrito extends JPanel {
     private JLabel labelTotal;
     private JPanel panelContenido;
     private CardLayout cardLayout;
+    private int idUsuarioLogueado; // Campo para el ID del usuario logueado
 
-    public VentanaCarrito(CardLayout cardLayout, JPanel panelContenido) {
+    public VentanaCarrito(CardLayout cardLayout, JPanel panelContenido, int idUsuarioLogueado) {
         this.cardLayout = cardLayout;
         this.panelContenido = panelContenido;
+        this.idUsuarioLogueado = idUsuarioLogueado; // Asignar el ID del usuario
         setLayout(new BorderLayout());
         setBackground(Color.WHITE);
         productosEnCarrito = new ArrayList<>();
@@ -98,11 +103,11 @@ public class VentanaCarrito extends JPanel {
     }
 
     // Método para agregar productos desde la tienda
-    public void agregarProductoDesdeTienda(String nombre, double precio, String imagen) {
+    public void agregarProductoDesdeTienda(int idJuego, String nombre, double precio, String imagen) {
         // Verificar si el producto ya está en el carrito
         for (int i = 0; i < productosEnCarrito.size(); i++) {
             Producto p = productosEnCarrito.get(i);
-            if (p.getNombre().equals(nombre)) {
+            if (p.getIdJuego() == idJuego) { // Comparar por idJuego en lugar de nombre para mayor precisión
                 p.setCantidad(p.getCantidad() + 1);
                 modeloTabla.setValueAt(p.getCantidad(), i, 2);
                 modeloTabla.setValueAt(p.getPrecio() * p.getCantidad(), i, 3);
@@ -112,7 +117,7 @@ public class VentanaCarrito extends JPanel {
         }
 
         // Si no existe, agregarlo como nuevo
-        Producto nuevoProducto = new Producto(nombre, precio, 1, imagen);
+        Producto nuevoProducto = new Producto(idJuego, nombre, precio, 1, imagen); // Pasa el idJuego
         productosEnCarrito.add(nuevoProducto);
         modeloTabla.addRow(new Object[]{
             nombre,
@@ -204,7 +209,16 @@ public class VentanaCarrito extends JPanel {
             JOptionPane.INFORMATION_MESSAGE
         );
 
-        if (opcion == JOptionPane.OK_OPTION) {
+         if (opcion == JOptionPane.OK_OPTION) {
+        // Lógica para guardar la compra en la base de datos
+        boolean compraExitosa = guardarCompraEnDB(); // <--- LLAMADA AL NUEVO MÉTODO
+
+        if (compraExitosa) {
+            JOptionPane.showMessageDialog(this, "Compra realizada con éxito", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+            // Vaciar el carrito después de guardar en DB
+            vaciarCarrito(null);
+
+            // Actualizar la biblioteca después de la compra exitosa
             VentanaBiblioteca biblioteca = null;
             for (Component comp : panelContenido.getComponents()) {
                 if (comp instanceof VentanaBiblioteca) {
@@ -212,14 +226,17 @@ public class VentanaCarrito extends JPanel {
                     break;
                 }
             }
-            
             if (biblioteca != null) {
-                biblioteca.agregarJuegosComprados(new ArrayList<>(productosEnCarrito));
+                // Llama a cargarJuegosCompradosDesdeDB para refrescar desde la BD
+                // NOTA: 'cargarJuegosCompradosDesdeDB' es un método que crearemos en VentanaBiblioteca
+                // en el siguiente paso. Por ahora, si VentanaBiblioteca no lo tiene, ignorará esta línea
+                // o te dará un error de compilación que corregiremos después.
+                biblioteca.cargarJuegosCompradosDesdeDB(idUsuarioLogueado);
             }
-            
-            JOptionPane.showMessageDialog(this, "Compra realizada con éxito", "Éxito", JOptionPane.INFORMATION_MESSAGE);
-            vaciarCarrito(null);
+        } else {
+            JOptionPane.showMessageDialog(this, "Error al procesar la compra. Intente nuevamente.", "Error", JOptionPane.ERROR_MESSAGE);
         }
+    }
     }
 
     private void actualizarTotal() {
@@ -228,6 +245,44 @@ public class VentanaCarrito extends JPanel {
             total += producto.getPrecio() * producto.getCantidad();
         }
         labelTotal.setText(String.format("Total: $%.2f", total));
+    }
+    // Nuevo método para guardar la compra en la base de datos
+    private boolean guardarCompraEnDB() {
+        if (idUsuarioLogueado == 0) { // Asegúrate de que el ID del usuario esté establecido
+            JOptionPane.showMessageDialog(this, "Error: Sesión de usuario no válida. Por favor, inicie sesión nuevamente.", "Error de Sesión", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+
+        try (Connection connection = ConexionDB.conectar()) {
+            // Desactiva el auto-commit para manejar la transacción manualmente
+            connection.setAutoCommit(false);
+            String insertSql = "INSERT INTO compras (id_usuario, id_juego, fecha_compra) VALUES (?, ?, GETDATE())";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(insertSql)) {
+                for (Producto producto : productosEnCarrito) {
+                    preparedStatement.setInt(1, idUsuarioLogueado);
+                    preparedStatement.setInt(2, producto.getIdJuego()); // Usar el idJuego
+                    preparedStatement.addBatch(); // Añadir la operación al lote
+                }
+                int[] filasAfectadas = preparedStatement.executeBatch(); // Ejecutar todas las inserciones
+
+                // Verificar si todas las inserciones fueron exitosas (opcional, pero buena práctica)
+                for (int count : filasAfectadas) {
+                    if (count < 0) { // Indica que una operación en el lote falló
+                        connection.rollback(); // Deshacer si algo falla
+                        System.err.println("DEBUG: Una inserción en el lote falló.");
+                        return false;
+                    }
+                }
+                connection.commit(); // Confirmar la transacción
+                return true;
+            }
+        } catch (SQLException ex) {
+            System.err.println("ERROR SQL al guardar compra:");
+            ex.printStackTrace();
+            // No es necesario un rollback aquí, el try-with-resources lo cierra y la conexión se maneja
+            // Si la conexión no se cierra, la base de datos eventualmente hará un rollback.
+            return false;
+        }
     }
 
     // Método para obtener los productos en el carrito (para el contador)
@@ -241,12 +296,14 @@ public class VentanaCarrito extends JPanel {
         private double precio;
         private int cantidad;
         private String imagen;
+        private int idJuego;
 
-        public Producto(String nombre, double precio, int cantidad, String imagen) {
+        public Producto(int idJuego, String nombre, double precio, int cantidad, String imagen) { // <--- MODIFICAR EL CONSTRUCTOR
             this.nombre = nombre;
             this.precio = precio;
             this.cantidad = cantidad;
             this.imagen = imagen;
+            this.idJuego = idJuego; // <--- ASIGNACIÓN DEL ID
         }
 
         public String getNombre() { return nombre; }
@@ -254,5 +311,6 @@ public class VentanaCarrito extends JPanel {
         public int getCantidad() { return cantidad; }
         public void setCantidad(int cantidad) { this.cantidad = cantidad; }
         public String getImagen() { return imagen; }
+        public int getIdJuego() { return idJuego; } // <--- AGREGAR ESTE GETTER
     }
 }
